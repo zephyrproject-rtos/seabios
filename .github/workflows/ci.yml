@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - zephyr-*
+  pull_request:
+    branches:
+    - zephyr-*
+  workflow_call:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Build bios-128k.bin
+      run: |
+        make KCONFIG_CONFIG=${PWD}/out/128k/.config OUT=${PWD}/out/128k/ oldnoconfig
+        make KCONFIG_CONFIG=${PWD}/out/128k/.config OUT=${PWD}/out/128k/ EXTRAVERSION=-zephyr
+
+    - name: Build bios-256k.bin
+      run: |
+        make KCONFIG_CONFIG=${PWD}/out/256k/.config OUT=${PWD}/out/256k/ oldnoconfig
+        make KCONFIG_CONFIG=${PWD}/out/256k/.config OUT=${PWD}/out/256k/ EXTRAVERSION=-zephyr
+
+    - name: Copy BIOS binaries
+      run: |
+        cp out/128k/bios.bin out/bios-128k.bin
+        cp out/256k/bios.bin out/bios-256k.bin
+
+    - name: Upload BIOS binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: bios
+        path: |
+          out/bios-128k.bin
+          out/bios-256k.bin

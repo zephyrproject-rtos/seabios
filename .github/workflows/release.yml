@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release
+    needs: [ ci ]
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Download BIOS binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: bios
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          bios-128k.bin
+          bios-256k.bin
